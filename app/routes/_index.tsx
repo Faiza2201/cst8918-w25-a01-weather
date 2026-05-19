@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => {
 
 const location = {
   city: 'Ottawa',
-  postalCode: 'K2G 1V8', // Algonquin College, Woodroffe Campus
+  postalCode: 'K2G 1V8',
   lat: 45.3211,
   lon: -75.7391,
   countryCode: 'CA',
@@ -24,9 +24,6 @@ const location = {
 const units = 'metric'
 
 export async function loader() {
-  // TODO: accept query params for location and units
-  // TODO: look up location by postal code
-
   const data = await fetchWeatherData({
     lat: location.lat,
     lon: location.lon,
@@ -37,7 +34,8 @@ export async function loader() {
 
 export default function CurrentConditions() {
   const { currentConditions } = useLoaderData<typeof loader>()
-  const weather = currentConditions.weather[0]
+  const weather = currentConditions.weather?.[0]
+
   return (
     <>
       <main
@@ -54,7 +52,9 @@ export default function CurrentConditions() {
             (LAT: {location.lat}, LON: {location.lon})
           </span>
         </p>
+
         <h2>Current Conditions</h2>
+
         <div
           style={{
             display: 'flex',
@@ -63,32 +63,42 @@ export default function CurrentConditions() {
             alignItems: 'center',
           }}
         >
-          <img src={getWeatherIconUrl(weather.icon)} alt="" />
+          {weather?.icon && (
+            <img src={getWeatherIconUrl(weather.icon)} alt="" />
+          )}
+
           <div style={{ fontSize: '2rem' }}>
-            {currentConditions.main.temp.toFixed(1)}°C
+            {currentConditions.main?.temp?.toFixed(1) ?? 'N/A'}°C
           </div>
         </div>
+
         <p
           style={{
             fontSize: '1.2rem',
             fontWeight: '400',
           }}
         >
-          {capitalizeFirstLetter(weather.description)}. Feels like{' '}
-          {currentConditions.main['feels_like'].toFixed(1)}°C.
+          {weather?.description
+            ? capitalizeFirstLetter(weather.description)
+            : 'No description available'}
+          . Feels like{' '}
+          {currentConditions.main?.feels_like?.toFixed(1) ?? 'N/A'}°C.
           <br />
           <span style={{ color: 'hsl(220, 23%, 60%)', fontSize: '0.85rem' }}>
             updated at{' '}
-            {new Intl.DateTimeFormat('en-CA', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            }).format(currentConditions.dt * 1000)}
+            {currentConditions.dt
+              ? new Intl.DateTimeFormat('en-CA', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                }).format(currentConditions.dt * 1000)
+              : 'N/A'}
           </span>
         </p>
       </main>
+
       <section
         style={{
           backgroundColor: 'hsl(220, 54%, 96%)',
@@ -99,7 +109,9 @@ export default function CurrentConditions() {
         <h2>Raw Data</h2>
         <pre>{JSON.stringify(currentConditions, null, 2)}</pre>
       </section>
+
       <hr style={{ marginTop: '2rem' }} />
+
       <p>
         Learn how to customize this app. Read the{' '}
         <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
